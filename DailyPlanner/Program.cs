@@ -41,12 +41,12 @@ namespace DailyPlanner
                     }
                     else if (choice == "3")
                     {
-                        //ShowOverdueTasks();
-                    }
+                    ShowOverdueTasks();
+                }
                     else if (choice == "4")
                     {
-                        //DeleteTask();
-                    }
+                    DeleteTask();
+                }
                     else if (choice == "5")
                     {
                         //SaveTasks();
@@ -149,6 +149,45 @@ namespace DailyPlanner
 
                 }
             }
+        }
+        static void ShowOverdueTasks()
+        {
+            Console.WriteLine(" ПРОСРОЧЕННЫЕ ЗАДАЧИ");
+            for (int i = 0; i < tasks.Count; i++)
+            {
+                if (deadlines[i] < DateTime.Now)
+                {
+                    Console.Write($"{i + 1}. {tasks[i]}");
+                    TimeSpan overdue = DateTime.Now - deadlines[i];
+                    Console.Write($" (просрочено на {overdue.Days}д {overdue.Hours}ч)");
+
+                }
+            }
+        }
+        static void DeleteTask()
+        {
+            Console.WriteLine("Удаление задач");
+            if (tasks.Count == 0)
+            {
+                Console.WriteLine("нет задач для удаления");
+                return;
+            }
+            showTasks();
+            Console.Write("Введите номре задачи, который хотите удалить: ");
+            int index = int.Parse(Console.ReadLine());
+            if (index > 0 && index <= tasks.Count)
+            {
+                Console.WriteLine($"вы удалили задачу: {tasks[index - 1]}");
+                tasks.RemoveAt(index - 1);
+                deadlines.RemoveAt(index - 1);
+                //save
+            }
+            else
+            {
+                Console.WriteLine("Неверный индекс");
+                return;
+            }
+
         }
 
     }
