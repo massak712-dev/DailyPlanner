@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,10 +12,10 @@ namespace DailyPlanner
         static List<string> tasks = new List<string>();
         static List<DateTime> deadlines = new List<DateTime>();
         static string filePath = "tasks.txt";
+
         static void Main(string[] args)
         {
-
-            //LoadTasks();
+            LoadTasks();
 
             while (true)
             {
@@ -25,89 +26,113 @@ namespace DailyPlanner
                 Console.WriteLine("2. Показать все задачи");
                 Console.WriteLine("3. Показать просроченные задачи");
                 Console.WriteLine("4. Удалить задачу");
-                Console.WriteLine("5. Выйти");
+                Console.WriteLine("5. Выйти и сохранить");
                 Console.WriteLine();
                 Console.Write("Выберите действие: ");
 
                 string choice = Console.ReadLine();
 
-                    if (choice == "1")
-                    {
-                        AddTask();
-                    }
-                    else if (choice == "2")
-                    {
-                        showTasks();
-                    }
-                    else if (choice == "3")
-                    {
+                if (choice == "1")
+                {
+                    AddTask();
+                }
+                else if (choice == "2")
+                {
+                    ShowTasks();
+                }
+                else if (choice == "3")
+                {
                     ShowOverdueTasks();
                 }
-                    else if (choice == "4")
-                    {
+                else if (choice == "4")
+                {
                     DeleteTask();
                 }
-                    else if (choice == "5")
-                    {
-                        //SaveTasks();
-                        Console.WriteLine("Данные сохранены. До свидания!");
-                        break;
-                    }
-                    else
-                    {
-                        Console.WriteLine("Неверный ввод!");
-                    }
-
-                    Console.WriteLine();
-                    Console.WriteLine("Нажмите любую клавишу для продолжения...");
-                    Console.ReadKey();
+                else if (choice == "5")
+                {
+                    SaveTasks();
+                    Console.WriteLine("Данные сохранены. До свидания!");
+                    break;
                 }
+                else
+                {
+                    Console.WriteLine("Неверный ввод!");
+                }
+
+                Console.WriteLine();
+                Console.WriteLine("Нажмите любую клавишу для продолжения...");
+                Console.ReadKey();
             }
+        }
+
         static void AddTask()
         {
             Console.Clear();
-            Console.WriteLine("Добавлние новой задачи");
+            Console.WriteLine("ДОБАВЛЕНИЕ НОВОЙ ЗАДАЧИ ");
+            Console.WriteLine();
+
             Console.Write("Введите задачу: ");
-            string task=Console.ReadLine();
-            if(string.IsNullOrEmpty(task))
+            string task = Console.ReadLine();
+
+            if (string.IsNullOrEmpty(task))
             {
-                Console.WriteLine("задача не может быть пустой");
+                Console.WriteLine("Задача не может быть пустой!");
                 return;
             }
-            Console.WriteLine("\n Введите дедлайн:");
-            Console.WriteLine(" дд.мм.гггг чч:мм  (например: 28.06.2026 18:00)");
-            string deadLineInput=Console.ReadLine();
-            DateTime deadLine= DateTime.Parse(deadLineInput);
+
+            Console.WriteLine();
+            Console.WriteLine("Введите дедлайн:");
+            Console.WriteLine("  дд.мм.гггг чч:мм  (например: 28.06.2026 18:00)");
+            Console.Write("> ");
+
+            string deadLineInput = Console.ReadLine();
+
+            if (!DateTime.TryParse(deadLineInput, out DateTime deadLine))
+            {
+                Console.WriteLine("Неверный формат даты! Используйте дд.мм.гггг чч:мм");
+                return;
+            }
+
             tasks.Add(task);
             deadlines.Add(deadLine);
-            //сохранение
-            Console.WriteLine("задачу добавлена");
+            SaveTasks();
+
+            Console.WriteLine();
+            Console.WriteLine($"Задача добавлена! Дедлайн: {deadLine:dd.MM.yyyy HH:mm}");
         }
-        static void showTasks()
+
+        static void ShowTasks()
         {
-            if(tasks.Count==0)
+            Console.Clear();
+            Console.WriteLine(" СПИСОК ЗАДАЧ ");
+            Console.WriteLine();
+
+            if (tasks.Count == 0)
             {
-                Console.WriteLine("нет заданий");
+                Console.WriteLine("Нет задач!");
                 return;
             }
-            for(int i=0;i<tasks.Count;i++)
+
+            for (int i = 0; i < tasks.Count; i++)
             {
                 Console.Write($"{i + 1}. {tasks[i]}");
-                TimeSpan remaining = deadlines[i]-DateTime.Now; ;
-                double remainingHours=remaining.TotalHours;
-                double totalTime = (deadlines[i] - DateTime.Now).TotalHours;
+
+                TimeSpan remaining = deadlines[i] - DateTime.Now;
+
                 if (remaining.TotalHours < 0)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.Write($" ПРОСРОЧЕНО! (-{(-remaining).Days}д {(-remaining).Hours}ч)");
+                    Console.Write($" ПРОСРОЧЕНО! (-{(-remaining).Days}д {(-remaining).Hours}ч {(-remaining).Minutes}мин)");
                     Console.ResetColor();
                 }
                 else
                 {
-                    double totalHourse = (deadlines[i] - DateTime.Now).TotalHours;
-                    if (deadlines[i] == DateTime.Now.Date)
+                    double totalHours = (deadlines[i] - DateTime.Now.Date).TotalHours;
+
+                    if (deadlines[i].Date == DateTime.Now.Date)
                     {
                         double percent = (remaining.TotalHours / 24) * 100;
+
                         if (percent > 70)
                         {
                             Console.ForegroundColor = ConsoleColor.White;
@@ -120,13 +145,16 @@ namespace DailyPlanner
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                         }
-                        Console.Write($"{remaining:hh\\:mm} (осталось)");
+
+                        Console.Write($" {remaining.Hours}ч {remaining.Minutes}мин (осталось)");
                         Console.ResetColor();
                     }
                     else
                     {
                         int daysLeft = remaining.Days;
-                        int HourseLeft = remaining.Hours;
+                        int hoursLeft = remaining.Hours;
+                        int minutesLeft = remaining.Minutes;
+
                         if (daysLeft > 3)
                         {
                             Console.ForegroundColor = ConsoleColor.White;
@@ -139,57 +167,116 @@ namespace DailyPlanner
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                         }
+
                         if (daysLeft > 0)
-                            Console.Write($"{daysLeft}д {HourseLeft}ч (осталось)");
+                            Console.Write($" {daysLeft}д {hoursLeft}ч {minutesLeft}мин (осталось)");
                         else
-                            Console.Write($"{HourseLeft}ч (осталось)");
+                            Console.Write($" {hoursLeft}ч {minutesLeft}мин (осталось)");
 
                         Console.ResetColor();
                     }
-
                 }
+                Console.WriteLine();
             }
         }
+
         static void ShowOverdueTasks()
         {
-            Console.WriteLine(" ПРОСРОЧЕННЫЕ ЗАДАЧИ");
+            Console.Clear();
+            Console.WriteLine("ПРОСРОЧЕННЫЕ ЗАДАЧИ");
+            Console.WriteLine();
+
+            bool hasOverdue = false;
+
             for (int i = 0; i < tasks.Count; i++)
             {
                 if (deadlines[i] < DateTime.Now)
                 {
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.Write($"{i + 1}. {tasks[i]}");
-                    TimeSpan overdue = DateTime.Now - deadlines[i];
-                    Console.Write($" (просрочено на {overdue.Days}д {overdue.Hours}ч)");
 
+                    TimeSpan overdue = DateTime.Now - deadlines[i];
+                    Console.WriteLine($" (просрочено на {overdue.Days}д {overdue.Hours}ч {overdue.Minutes}мин)");
+
+                    Console.ResetColor();
+                    hasOverdue = true;
                 }
             }
+
+            if (!hasOverdue)
+            {
+                Console.WriteLine("Просроченных задач нет");
+            }
         }
+
         static void DeleteTask()
         {
-            Console.WriteLine("Удаление задач");
+            Console.Clear();
+            Console.WriteLine(" УДАЛЕНИЕ ЗАДАЧИ ");
+            Console.WriteLine();
+
             if (tasks.Count == 0)
             {
-                Console.WriteLine("нет задач для удаления");
+                Console.WriteLine("Нет задач для удаления!");
                 return;
             }
-            showTasks();
-            Console.Write("Введите номре задачи, который хотите удалить: ");
+
+            for (int i = 0; i < tasks.Count; i++)
+            {
+                Console.WriteLine($"{i + 1}. {tasks[i]} (дедлайн: {deadlines[i]:dd.MM.yyyy HH:mm})");
+            }
+
+            Console.WriteLine();
+            Console.Write("Введите номер задачи для удаления: ");
+
             int index = int.Parse(Console.ReadLine());
             if (index > 0 && index <= tasks.Count)
             {
-                Console.WriteLine($"вы удалили задачу: {tasks[index - 1]}");
+                Console.WriteLine($"Удалена задача: {tasks[index - 1]}");
                 tasks.RemoveAt(index - 1);
                 deadlines.RemoveAt(index - 1);
-                //save
+                SaveTasks();
             }
             else
             {
-                Console.WriteLine("Неверный индекс");
+                Console.WriteLine("Неверный индекс!");
+            }
+        }
+
+        static void SaveTasks()
+        {
+            List<string> lines = new List<string>();
+
+            for (int i = 0; i < tasks.Count; i++)
+            {
+                string line = $"{tasks[i]}|{deadlines[i]:yyyy-MM-dd HH:mm}";
+                lines.Add(line);
+            }
+
+            File.WriteAllLines(filePath, lines);
+        }
+
+        static void LoadTasks()
+        {
+            if (!File.Exists(filePath))
+            {
                 return;
             }
 
-        }
+            string[] lines = File.ReadAllLines(filePath);
 
+            foreach (string line in lines)
+            {
+                string[] parts = line.Split('|');
+
+                if (parts.Length == 2)
+                {
+                        tasks.Add(parts[0]);
+                        deadlines.Add(DateTime.Parse(parts[1]));
+                    
+                   
+                }
+            }
+        }
     }
-    
-    }
+}
